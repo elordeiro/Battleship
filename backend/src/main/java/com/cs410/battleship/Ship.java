@@ -2,26 +2,6 @@ package com.cs410.battleship;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-enum ShipType {
-    CARRIER, BATTLESHIP, CRUISER, SUBMARINE, DESTROYER
-}
-
-enum Alignment {
-    HORIZONTAL, VERTICAL
-}
-
-class Coordinate {
-    int x;
-    int y;
-    Coordinate(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-    static Coordinate of(int x, int y) {
-        return new Coordinate(x, y);
-    }
-}
-
 /**
  * Ship:
  *  A ship is a collection of squares
@@ -51,7 +31,7 @@ public class Ship {
      * @param alignment The alignment of the ship
      * @throws IllegalArgumentException if the ship is out of bounds
      */
-    Ship(ShipType type, Coordinate coordinate, Alignment alignment) {
+    public Ship(ShipType type, Coordinate coordinate, Alignment alignment) {
         checkCoordinate(coordinate);
         shipType = type;
         switch (type) {

@@ -33,7 +33,7 @@ public class GameState {
      * @param playerOne The first player
      * @param playerTwo The second player
      */
-    GameState(Player playerOne, Player playerTwo) {
+    public GameState(Player playerOne, Player playerTwo) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
         this.activePlayer = playerOne;

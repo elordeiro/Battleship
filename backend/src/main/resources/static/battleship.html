@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="display: flex;">
+            <div style="margin-right: 120px"><h2>Ocean Grid</h2></div>
+            <div style="margin-left: 120px"><h2>Target Grid</h2></div>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <div class="grid-container" id="player-grid" style="margin-right: 20px"></div>
+            <div class="grid-container" id="opponent-grid" style="margin-left: 20px"></div>
+        </div>
+        <div id="ships-div" style="display: flex; flex-direction: column; align-items: center;">
+            <h2 id="ships">Ships</h2>
+            <div class="grid-container" id="player-ships"></div>
+            </br>
+            <div style="display: flex; flex-direction: row; align-items: center;">
+                <button style="margin-right: 20px;" id="rotate-ships">Rotate Ship</button>
+                </br></br>
+                <button style="margin-left: 20px;" id="start-game">Start Game</button>
+                </br></br>
+                <button style="margin-left: 20px;" id="auto-place">auto-place</button>
+                </br></br>
+            </div>
+        </div>
+        <div id="output" style="display: flex; flex-direction: column; align-items: center;">
+            <h2>Console</h2>
+            <textarea readonly id="output-text" rows="4" cols="40"></textarea>
+            </br></br>
+            <!-- Ex. Commands:</br>
+            hit 0 0</br>
+            miss 2 3</br>
+            switchPlayer</br>
+            winner Player1</br>
+            sunk Carrier</br>
+            <textarea id="input" rows="1" cols="40" placeholder="Debugging commands"></textarea>
+            <button onclick="executeCommand()">Execute</button> -->
+        </div>
+        <!-- <button style="margin-top: 20px;" id="update">Update Game State</button> -->
+    </div>
+    <script src="./script.js"></script>
+</body>
+
+</html>

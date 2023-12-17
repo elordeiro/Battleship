@@ -5,14 +5,17 @@ let selectedShip     = null;                            // ship to be placed on 
 let selectedShipSize = 0;                               // size of selected ship (2-5)
 let alignment        = 'horizontal';                    // alignment of selected ship
 let gameStarted      = false;                           // true after 'Start Game' is clicked
-let player           = new Player('Player 1');          // TODO: get name from server
-// let updateInterval   = setInterval(updateState, 3000);  // update every 3 seconds
+let player           = new Player(generatePlayerId());  // player object
+let updateInterval   = null;                            // update every 3 seconds
 
 // Attack object to be sent to server
 let Attack = {
-    type: 'Play',
-    x: 0,
-    y: 0,
+    actionType: 'Play',
+    revisionId: -1,
+    coordinates: {
+        x: 0,
+        y: 0,
+    }
 }
 
 let AttackResult = {
@@ -22,19 +25,12 @@ let AttackResult = {
 }
 
 let pollData = {
-    revision: 0,
-    shipSunkEvent: "Battleship",
-    game_over: false,
-    winner: null,
-    activePlayer: "Player 2",
-    actionXCord: 0,
-    actionYCord: 0,
-    actionResult: "HIT",
+    revisionId: -1,
 };
 // ============================================================================
 
 function Player(name) {
-    this.name = name;  // TODO: get name from server
+    this.name = name;
     this.ships = [];
 }
 
@@ -45,6 +41,14 @@ function Ship(type, coordinates, alignment) {
 }
 
 // Helper functions ===========================================================
+
+// Function to generate a unique player ID
+function generatePlayerId() {
+    const timestamp = new Date().getTime();
+    const random = Math.floor(Math.random() * 10000);
+  
+    return `${timestamp}-${random}`;
+  }
 
 // Returns true if ship has been placed on grid
 function wasSet(Ship) {
@@ -220,7 +224,7 @@ function handleClickOceanGrid(i, container) {
             cell.dataset.occupied = 'true';
         }
     }
-    player.ships.push(new Ship(selectedShip, linearTo2D(i), alignment));
+    player.ships.push(new Ship(selectedShip.toUpperCase(), linearTo2D(i), alignment.toUpperCase()));
     const output = document.getElementById('output-text');
     output.innerHTML = selectedShip + ' placed at (' + linearToNumLetters(i)[0] + ', ' + linearToNumLetters(i)[1] + ')\n';
     removeShipFromShips(selectedShipSize);
@@ -241,6 +245,7 @@ function handleClickTargetGrid(i, container) {
         Attack.coordinates = linearTo2D(i);
         cell.dataset.attacked = 'true';
         console.log(Attack);
+        pollData.activePlayer = 'opponent';
         attack();
     }
 }
@@ -410,11 +415,13 @@ function startGame() {
         const shipsDiv = document.getElementById('ships-div');
         shipsDiv.parentNode.removeChild(shipsDiv);
 
-        console.log(initGame());  // For Debugging
+        initGame();
         document.getElementById('output-text').innerHTML = 'Game started!';
     }
 }
 document.getElementById('start-game').addEventListener('click', startGame);
+
+// Update grids ===============================================================
 
 function handleGameOver() {
     console.log('Game over!');
@@ -436,14 +443,64 @@ function handleShipSunk() {
     }
 }
 
+function updateOceanGrid(i) {
+    if (pollData.activePlayer === player.name) {
+        // Player's ship was hit but not sunk
+        if (pollData.actionResult === 'HIT') {
+            const cell = document.getElementById('player-grid-' + i);
+            cell.className = 'grid-item-hit';
+            if (pollData.shipSunkEvent === null) {
+                console.log('Hit!');
+                const output = document.getElementById('output-text');
+                output.innerHTML = 'Hit on (' + linearToNumLetters(i) + ')!\n';
+            }
+        } else {
+            // Attack was a miss, don't change cell color
+            console.log('Miss!\n');
+            const output = document.getElementById('output-text');
+            output.innerHTML = 'Miss!\n';
+        }
+        console.log('Your turn!');
+        const output = document.getElementById('output-text');
+        output.innerHTML += 'Your turn!\n';
+        output.innerHTML += 'Click on a cell in Target Grid to attack!\n';
+    }
+}
+
+function updateTargetGrid(i) {
+    // Opponent's ship was hit but not sunk
+    if (pollData.activePlayer !== player.name) {
+        const cell = document.getElementById('opponent-grid-' + i);
+        if (pollData.actionResult === 'HIT'){
+            cell.className = 'grid-item-hit';
+            if (pollData.shipSunkEvent === null) {
+                console.log('Hit!');
+                const output = document.getElementById('output-text');
+                output.innerHTML = 'Hit on (' + linearToNumLetters(i) + ')!\n';
+            }
+        } else {
+            // Attack was a miss, change cell color in target grid
+            console.log('Miss!');
+            const output = document.getElementById('output-text');
+            output.innerHTML = 'Miss!\n';
+            cell.className = 'grid-item-miss';
+        }
+        console.log('Opponent\'s turn!');
+        const output = document.getElementById('output-text');
+        output.innerHTML += 'Awaiting Attack!';
+    }
+}
+
 // Server communication =======================================================
 // send initGame object to server
 function initGame() {
     const gameData = {
-        type: 'INIT',
-        name: player.name,
+        actionType: 'INIT',
+        revisionId: -1,
+        playerID: player.name,
         ships: player.ships
     };
+    console.log(gameData);
     fetch('http://localhost:8080/api/play', {
         method: 'POST',
         headers: {
@@ -456,6 +513,7 @@ function initGame() {
     .catch((error) => {
         console.error('Error:', error);
     });
+    updateInterval = setInterval(updateState, 500);
 }
 
 // send Attack object to server
@@ -468,7 +526,10 @@ function attack() {
         body: JSON.stringify(Attack),
     })
     .then(response => response.json())
-    .then(data => console.log(data))
+    .then(data => {
+        pollData = data;
+        console.log(data);
+    })
     .catch((error) => {
         console.error('Error:', error);
     });
@@ -476,15 +537,25 @@ function attack() {
 
 // get pollData from server
 function updateState () {
-    fetch('http://localhost:8080/poll')
+    fetch('http://localhost:8080/api/poll', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
     .then(response => response.json())
     .then(data => {
         pollData = data;
+        console.log(pollData);
     })
     .catch((error) => {
         console.error('Error:', error);
     });
 
+    if (pollData.revisionId < 1) {
+        console.log('Waiting for opponent...');
+        return;
+    }
     if (pollData.game_over) {
         handleGameOver();
         return;
@@ -492,54 +563,16 @@ function updateState () {
     if (pollData.shipSunkEvent !== null) {
         handleShipSunk();
     }
-
+    
     AttackResult.x = pollData.actionXCord;
     AttackResult.y = pollData.actionYCord;
     AttackResult.result = pollData.actionResult;
     const i = linearFrom2D(AttackResult.x, AttackResult.y);
-    if (pollData.activePlayer === player.name) {
-        // Player's ship was hit but not sunk
-        if (pollData.actionResult === 'HIT') {
-            const cell = document.getElementById('player-grid-' + i);
-            cell.className = 'grid-item-hit';
-            if (pollData.shipSunkEvent === null) {
-                console.log('Hit!');
-                const output = document.getElementById('output-text');
-                output.innerHTML += 'Hit on (' + linearFrom2D(AttackResult.x, AttackResult.y) + ')!';
-            }
-        } else {
-            // Attack was a miss, don't change cell color
-            console.log('Miss!');
-            const output = document.getElementById('output-text');
-            output.innerHTML += 'Miss!\n';
-        }
-        console.log('Your turn!');
-        const output = document.getElementById('output-text');
-        output.innerHTML += 'Your turn!\n';
-        output.innerHTML += 'Click on a cell in Target Grid to attack!\n';
-    } else {
-        // Opponent's ship was hit but not sunk
-        const cell = document.getElementById('opponent-grid-' + i);
-        if (pollData.actionResult === 'HIT'){
-            cell.className = 'grid-item-hit';
-            if (pollData.shipSunkEvent === null) {
-                console.log('Hit!');
-                const output = document.getElementById('output-text');
-                output.innerHTML += 'Hit on (' + linearFrom2D(AttackResult.x, AttackResult.y) + ')!';
-            }
-        } else {
-            // Attack was a miss, change cell color in target grid
-            console.log('Miss!');
-            const output = document.getElementById('output-text');
-            output.innerHTML += 'Miss!\n';
-            cell.className = 'grid-item-miss';
-        }
-        console.log('Opponent\'s turn!');
-        const output = document.getElementById('output-text');
-        output.innerHTML += 'Awaiting Attack!';
-    }
+    
+    updateOceanGrid(i);
+    updateTargetGrid(i);
+    
 }
-
 // Debugging ==================================================================
 function testServer() {
     fetch('http://localhost:8080/api/hello', {
@@ -555,3 +588,17 @@ function testServer() {
     });
 }
 testServer();
+
+function autoPlacing() {
+    document.getElementById('player-ships-carrier-1').click();
+    document.getElementById('player-grid-1').click();
+    document.getElementById('player-ships-battleship-1').click();
+    document.getElementById('player-grid-11').click();
+    document.getElementById('player-ships-cruiser-1').click();
+    document.getElementById('player-grid-21').click();
+    document.getElementById('player-ships-submarine-1').click();
+    document.getElementById('player-grid-31').click();
+    document.getElementById('player-ships-destroyer-1').click();
+    document.getElementById('player-grid-41').click();
+}
+document.getElementById('auto-place').addEventListener('click', autoPlacing);

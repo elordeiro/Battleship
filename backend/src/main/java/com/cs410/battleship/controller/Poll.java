@@ -1,5 +1,6 @@
-package com.cs410.battleship;
+package com.cs410.battleship.controller;
 
+import com.cs410.battleship.GameState;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Poll {
@@ -21,6 +22,17 @@ public class Poll {
     String actionResult; //"HIT" or "MISS"
 
     public Poll(GameState gs){
+        if (gs == null) {
+            revisionId = -1;
+            shipSunkEvent = null;
+            game_over = false;
+            winner = null;
+            activePlayer= null;
+            actionXCord= -1;
+            actionYCord= -1;
+            actionResult= null;
+            return;
+        }
         revisionId = gs.getRevisionId();
         shipSunkEvent = gs.getSinkingEvent();
         game_over = gs.isGameOver();
@@ -30,4 +42,9 @@ public class Poll {
         actionYCord= gs.getActionYCoord();
         actionResult= gs.getActionResult();
     }
+
+    public static Poll nullPoll(){
+        return new Poll(null);
+    }   
 }
+

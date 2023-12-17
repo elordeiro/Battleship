@@ -35,7 +35,7 @@ public class Player {
      * @param name The name of the player
      * @param ships The ships that the player will place on their ocean grid
      */
-    Player(String name, Ship[] ships) {
+    public Player(String name, Ship[] ships) {
         this.name = name;
         this.ships = ships;
         targetGrid = new Grid();
@@ -122,4 +122,7 @@ public class Player {
         return oceanGrid;
     }
 
+    public Ship[] getShips(){
+        return ships;
+    }
 }
