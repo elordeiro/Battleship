@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Grids ====================================================================== -->
+    <h1 style="text-align: center;">Battleship</h1>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="display: flex;">
+            <div style="margin-right: 120px"><h2>Ocean Grid</h2></div>
+            <div style="margin-left: 120px"><h2>Target Grid</h2></div>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <div class="grid-container" id="player-grid" style="margin-right: 20px"></div>
+            <div class="grid-container" id="opponent-grid" style="margin-left: 20px"></div>
+        </div>
+        
+        <!-- Waiting Room ============================================================= -->
+        <div id="waiting-room">
+            </br></br>
+            <div style="display: flex; flex-direction: column; align-items: center; ">
+                <textarea id="player-id" rows="1" cols="40" placeholder="Enter a player ID [Required]"></textarea>
+                <textarea id="room-id" rows="1" cols="40" placeholder="Enter a playing room ID [Optional]"></textarea>
+            </div>
+        </br>
+        <div style="display: flex; flex-direction: row; ">
+            <button id="start-new-game" style="width: 120px;">Start New Game</button>
+            <button id="join-game" style="width: 120px; margin-left: 10px">Join Game</button>
+            <button id="join-random-game" style="width: 140px; margin-left: 10px">Join Random Game</button>
+        </div>
+    </div>
+    </br></br><textarea id="join-result" rows="1" cols="40" style="visibility: hidden;" ></textarea>
+
+        <!-- Playing Room ============================================================= -->
+        <div id="playing-room" style="visibility: hidden;">
+            <div id="ships-div" style="display: flex; flex-direction: column; align-items: center;">
+                <h2 id="ships">Ships</h2>
+                <div class="grid-container" id="player-ships"></div>
+                </br>
+
+                <div style="display: flex; flex-direction: row; align-items: center; ">
+                    <button style="margin-right: 20px;" id="rotate-ships">Rotate Ship</button>
+                    </br></br>
+                    <button style="margin-left: 20px;" id="start-game">Start Game</button>
+                    </br></br>
+                    <button style="margin-left: 20px;" id="auto-place">auto-place</button>
+                    </br></br>
+                </div>
+            </div>
+            <div id="output" style="display: flex; flex-direction: column; align-items: center;">
+                <h2>Console</h2>
+                <textarea readonly id="room-id-output" rows="1" cols="50"></textarea>
+                <textarea readonly id="output-text" rows="4" cols="50"></textarea>
+                </br></br>
+            </div>
+        </div>
+    </div>
+    <script src="./script.js"></script>
+</body>
+
+</html>
