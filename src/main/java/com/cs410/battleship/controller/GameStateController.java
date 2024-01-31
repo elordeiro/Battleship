@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:8081")
 public class GameStateController {
     private Queue<Room> rooms = new LinkedList<>();
 
