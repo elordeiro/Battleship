@@ -1,4 +1,5 @@
 // Gobal Variables ============================================================
+let DEBUG = false;
 const gridSize = 10; // grid is gridSize x gridSize cells
 const numCells = gridSize * gridSize; // total number of cells
 let selectedShip = null; // ship to be placed on grid
@@ -9,10 +10,19 @@ let player = null; // player object
 let roomID = -1; // room object
 let opponent = null; // opponent object
 let counter = 0; // counter for polling
-let targetGridContainer;
-let targetGridContainerParent;
 let timedOut = false;
-let consoleOutput;
+
+// Divs and containers ========================================================
+let bothGrids = document.getElementById("both-grids");
+let playerGrid = document.getElementById("player-grid");
+let playerGridContainer = document.getElementById("player-grid-container");
+let targetGrid = document.getElementById("opponent-grid");
+let targetGridContainer = document.getElementById("target-grid-container");
+let playingRoom = document.getElementById("playing-room");
+let shipsDiv = document.getElementById("ships-div");
+let playerShips = document.getElementById("player-ships");
+let consoleOutput = document.getElementById("output-text");
+let outputDiv = document.getElementById("output");
 
 // Attack object to be sent to server
 let Attack = {
@@ -504,6 +514,40 @@ document.getElementById("start-game").addEventListener("click", startGame);
 // Update grids ===============================================================
 /* After an attack, if the active player is the current player,
  * we update the ocean grid with the result of the attack */
+
+function getShipLength(ship) {
+    if (ship === "carrier") {
+        return 5;
+    } else if (ship === "battleship") {
+        return 4;
+    } else if (ship === "cruiser") {
+        return 3;
+    } else if (ship === "submarine") {
+        return 3;
+    } else if (ship === "destroyer") {
+        return 2;
+    }
+}
+
+function colorSunkShips(ship, alignment, x, y) {
+    const shipLength = getShipLength(ship);
+    if (alignment === "horizontal") {
+        for (let j = 0; j < shipLength; j++) {
+            const cell = document.getElementById(
+                "opponent-grid-" + linearFrom2D(parseInt(x) + j, parseInt(y))
+            );
+            cell.className = "grid-item-sunk";
+        }
+    } else {
+        for (let j = 0; j < shipLength; j++) {
+            const cell = document.getElementById(
+                "opponent-grid-" + linearFrom2D(parseInt(x), parseInt(y) + j)
+            );
+            cell.className = "grid-item-sunk";
+        }
+    }
+}
+
 function updateOceanGrid(i) {
     if (pollData.activePlayer === player.name) {
         // Player's ship was hit but not sunk
@@ -572,6 +616,64 @@ function setOpponentID() {
     }
 }
 
+function resetGame() {
+    player.ships.length = 0;
+    counter = 0;
+    timedOut = false;
+    pollData = {
+        revisionId: -1,
+    };
+    Attack = {
+        actionType: "PLAY",
+        roomID: roomID,
+        coordinates: {
+            x: 0,
+            y: 0,
+        },
+    };
+    AttackResult = {
+        x: 0,
+        y: 0,
+        result: "MISS",
+    };
+    gameStarted = false;
+    selectedShip = null;
+    selectedShipSize = 0;
+    alignment = "horizontal";
+
+    const output = document.getElementById("output-text");
+    output.innerHTML = "";
+
+    playerGrid.replaceChildren();
+    targetGrid.replaceChildren();
+    createGrid("player-grid");
+    createGrid("opponent-grid");
+
+    playingRoom.replaceChildren();
+    playingRoom.appendChild(shipsDiv);
+    playingRoom.appendChild(outputDiv);
+
+    playerShips.replaceChildren();
+    createShip("player-ships", 5, "carrier");
+    createShip("player-ships", 4, "battleship");
+    createShip("player-ships", 3, "cruiser");
+    createShip("player-ships", 3, "submarine");
+    createShip("player-ships", 2, "destroyer");
+
+    const restart = document.getElementById("restart");
+    restart.style.visibility = "hidden";
+
+    output.style.backgroundColor = "#f8fafc";
+    output.style.color = "black";
+    displayInitialMessage();
+
+    if (window.innerWidth < 760) {
+        targetGridContainer.remove();
+    }
+
+    restartGame();
+}
+
 function handleGameOver() {
     console.log("Game over!");
     const winner = pollData.winner;
@@ -585,15 +687,20 @@ function handleGameOver() {
     output.innerHTML += winner + " wins!";
     gameStarted = false;
     consoleOutput.style.backgroundColor = "#f97316";
+    const restart = document.getElementById("restart");
+    restart.style.visibility = "visible";
+    restart.addEventListener("click", resetGame);
 }
 
 function handleShipSunk() {
-    console.log(pollData.shipSunkEvent + " sunk!");
+    const [ship, alignment, x, y] = pollData.shipSunkEvent.split(" ");
+    console.log(ship + " sunk!");
     const output = document.getElementById("output-text");
     if (pollData.activePlayer === player.name) {
         output.innerHTML = pollData.shipSunkEvent + " sunk!\n";
     } else {
-        output.innerHTML = "You sunk " + pollData.shipSunkEvent + "!\n";
+        output.innerHTML = "You sunk " + ship + "!\n";
+        colorSunkShips(ship.toLowerCase(), alignment.toLowerCase(), x, y);
     }
 }
 
@@ -645,14 +752,6 @@ function processNewState() {
         return;
     }
 
-    if (pollData.game_over) {
-        handleGameOver();
-        return;
-    }
-    if (pollData.shipSunkEvent !== null) {
-        handleShipSunk();
-    }
-
     AttackResult.x = pollData.actionXCord;
     AttackResult.y = pollData.actionYCord;
     AttackResult.result = pollData.actionResult;
@@ -661,12 +760,34 @@ function processNewState() {
     updateOceanGrid(i);
     updateTargetGrid(i);
 
+    if (pollData.shipSunkEvent !== null) {
+        handleShipSunk();
+    }
+
+    if (pollData.game_over) {
+        handleGameOver();
+        return;
+    }
+
     consoleOutput.style.color = "white";
     if (pollData.activePlayer !== player.name) {
         consoleOutput.style.backgroundColor = "#6b7280";
         updateState();
     } else {
         consoleOutput.style.backgroundColor = "#3b82f6";
+        if (DEBUG) {
+            while (true) {
+                const randomCell = document.getElementById(
+                    "opponent-grid-" + rand()
+                );
+                if (randomCell.dataset.attacked === undefined) {
+                    setTimeout(function () {
+                        randomCell.click();
+                    }, 200);
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -707,10 +828,6 @@ function startNewGame() {
                 "Your Room ID is: " + roomID;
             displayInitialMessage();
             if (window.innerWidth < 760) {
-                targetGridContainer = document.getElementById(
-                    "target-grid-container"
-                );
-                targetGridContainerParent = targetGridContainer.parentElement;
                 targetGridContainer.remove();
             }
         })
@@ -776,10 +893,6 @@ function joinGame() {
             setOpponentID();
             displayInitialMessage();
             if (window.innerWidth < 760) {
-                targetGridContainer = document.getElementById(
-                    "target-grid-container"
-                );
-                targetGridContainerParent = targetGridContainer.parentElement;
                 targetGridContainer.remove();
             }
         })
@@ -847,10 +960,6 @@ function joinRandomGame() {
             setOpponentID();
             displayInitialMessage();
             if (window.innerWidth < 760) {
-                targetGridContainer = document.getElementById(
-                    "target-grid-container"
-                );
-                targetGridContainerParent = targetGridContainer.parentElement;
                 targetGridContainer.remove();
             }
         })
@@ -889,6 +998,30 @@ function returnChoice(choice) {
         });
 }
 
+function restartGame() {
+    const payload = {
+        actionType: "RESTART",
+        roomID: roomID,
+        playerID: player.name,
+    };
+    console.log(payload);
+    fetch("/api/play", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            pollData = data;
+            console.log(data);
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 // Playing Game ===============================================================
 // send initGame object to server
 function initGame() {
@@ -900,7 +1033,7 @@ function initGame() {
     };
     console.log(payload);
     if (window.innerWidth < 760) {
-        targetGridContainerParent.appendChild(targetGridContainer);
+        bothGrids.appendChild(targetGridContainer);
     }
     fetch("/api/play", {
         method: "POST",

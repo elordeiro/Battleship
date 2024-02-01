@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,6 +65,27 @@ public class GameStateController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(DataLoader.stringfy("Invalid room ID"));
     }
 
+    private ResponseEntity<String> restartGame(String payload){
+        int roomID = DataLoader.getRoomID(payload);
+        Room room = rooms.stream().filter(r -> r.getRoomID() == roomID).findFirst().orElse(null);
+        String playerID = DataLoader.getPlayerID(payload);
+
+        if (room != null) {
+            if (room.gs != null) {
+                rooms.remove(room);
+                Room newRoom = new Room(playerID, roomID);
+                rooms.add(newRoom);
+                scheduler.schedule(() -> {
+                    rooms.remove(newRoom);
+                }, 1, TimeUnit.HOURS);
+                return ResponseEntity.ok().body(DataLoader.stringfy(newRoom));
+            } else {
+                return room.addPlayer(playerID);
+            }
+        }
+        return ResponseEntity.ok().body(DataLoader.stringfy("Invalid room ID"));
+    }
+
     private ResponseEntity<String> initializeGame(String payload){
         int roomID = DataLoader.getRoomID(payload);
         Room room = rooms.stream().filter(r -> r.getRoomID() == roomID).findFirst().orElse(null);
@@ -80,9 +100,9 @@ public class GameStateController {
         Room room = rooms.stream().filter(r -> r.getRoomID() == roomID).findFirst().orElse(null);
         if (room != null) {
             ResponseEntity<String> response = room.play(payload);
-            if (room.gs.isGameOver()) {
-                rooms.remove(room);
-            }
+            // if (room.gs.isGameOver()) {
+            //     rooms.remove(room);
+            // }
             return response;
         }
         return ResponseEntity.ok().body(DataLoader.stringfy("Invalid room ID"));
@@ -134,7 +154,10 @@ public class GameStateController {
             return joinRoom(payload);
         } else if (actionType.equals("RESPOND")) {
             return respondToJoin(payload);
-        } else {
+        } else if(actionType.equals("RESTART")) {
+            return restartGame(payload);
+        } 
+        else {
             return ResponseEntity.ok().body(DataLoader.stringfy("Invalid action type"));
         }
     }

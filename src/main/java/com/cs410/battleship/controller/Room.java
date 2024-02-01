@@ -35,6 +35,12 @@ public class Room {
         futureResult = new DeferredResult<>(30000L, ResponseEntity.ok().body(DataLoader.stringfy(this)));
     }
 
+    Room(String playerOneID, int roomID){
+        this.playerOneID = playerOneID;
+        this.roomID = roomID;
+        futureResult = new DeferredResult<>(30000L, ResponseEntity.ok().body(DataLoader.stringfy(this)));
+    }
+
     public ResponseEntity<String> addPlayer(String playerTwoID){
         if (this.playerTwoID != null) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(DataLoader.stringfy("Room is full"));

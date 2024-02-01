@@ -34,6 +34,13 @@ body {
     border: 1px solid #ccc;
     background-color: #f40b0b;
 }
+
+.grid-item-sunk {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    background-color: #450a0a;
+}
 .grid-item-miss {
     width: 30px;
     height: 30px;

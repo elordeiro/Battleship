@@ -10,13 +10,14 @@
         <h1 style="text-align: center">Battleship</h1>
         <div style="display: flex; flex-direction: column; align-items: center">
             <!-- Grids ====================================================================== -->
-            <div style="display: flex" class="both-grids">
+            <div style="display: flex" class="both-grids" id="both-grids">
                 <div
                     style="
                         display: flex;
                         justify-content: space-between;
                         flex-direction: column;
                     "
+                    id="player-grid-container"
                 >
                     <div style="text-align: center"><h2>Ocean Grid</h2></div>
                     <div
@@ -148,6 +149,9 @@
                         cols="50"
                     ></textarea>
                     <br /><br />
+                    <button id="restart" style="visibility: hidden">
+                        Restart
+                    </button>
                 </div>
             </div>
         </div>

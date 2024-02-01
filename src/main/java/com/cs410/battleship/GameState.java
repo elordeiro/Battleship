@@ -1,4 +1,5 @@
 package com.cs410.battleship;
+import java.util.HashMap;
 import java.util.Optional;
 
 /**
@@ -99,6 +100,9 @@ public class GameState {
         if (ship.isPresent()) {
             System.out.println(defender.name + "'s " + ship.get().shipType + " was sunk!");
             sinkingEvent = String.valueOf(ship.get().shipType);
+            sinkingEvent += " " + ship.get().alignment;
+            Coordinate c = ship.get().coordinate;
+            sinkingEvent += " " + c.x + " " + c.y;
             // System.out.println("Press enter to continue");
             // if (scanner.hasNextLine()) {
             //     scanner.nextLine();
