@@ -531,18 +531,18 @@ function getShipLength(ship) {
 
 function colorSunkShips(ship, alignment, x, y) {
     const shipLength = getShipLength(ship);
+    const grid =
+        pollData.activePlayer === player.name
+            ? "player-grid-"
+            : "opponent-grid-";
     if (alignment === "horizontal") {
         for (let j = 0; j < shipLength; j++) {
-            const cell = document.getElementById(
-                "opponent-grid-" + linearFrom2D(parseInt(x) + j, parseInt(y))
-            );
+            const cell = document.getElementById(grid + linearFrom2D(x + j, y));
             cell.className = "grid-item-sunk";
         }
     } else {
         for (let j = 0; j < shipLength; j++) {
-            const cell = document.getElementById(
-                "opponent-grid-" + linearFrom2D(parseInt(x), parseInt(y) + j)
-            );
+            const cell = document.getElementById(grid + linearFrom2D(x, y + j));
             cell.className = "grid-item-sunk";
         }
     }
@@ -697,10 +697,24 @@ function handleShipSunk() {
     console.log(ship + " sunk!");
     const output = document.getElementById("output-text");
     if (pollData.activePlayer === player.name) {
-        output.innerHTML = pollData.shipSunkEvent + " sunk!\n";
+        output.innerHTML = ship + " sunk!\n";
+        output.innerHTML += "Your turn!\n";
+        output.innerHTML += "Click on a cell in Target Grid to attack!\n";
+        colorSunkShips(
+            ship.toLowerCase(),
+            alignment.toLowerCase(),
+            parseInt(x),
+            parseInt(y)
+        );
     } else {
         output.innerHTML = "You sunk " + ship + "!\n";
-        colorSunkShips(ship.toLowerCase(), alignment.toLowerCase(), x, y);
+        output.innerHTML += "Awaiting " + opponent + "'s Attack!";
+        colorSunkShips(
+            ship.toLowerCase(),
+            alignment.toLowerCase(),
+            parseInt(x),
+            parseInt(y)
+        );
     }
 }
 
