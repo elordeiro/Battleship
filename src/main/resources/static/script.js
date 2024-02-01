@@ -12,6 +12,7 @@ let counter = 0; // counter for polling
 let targetGridContainer;
 let targetGridContainerParent;
 let timedOut = false;
+let consoleOutput;
 
 // Attack object to be sent to server
 let Attack = {
@@ -549,7 +550,7 @@ function updateTargetGrid(i) {
         }
         console.log("Opponent's turn!");
         const output = document.getElementById("output-text");
-        output.innerHTML += "Awaiting Attack!";
+        output.innerHTML += `Awaiting ${opponent}'s Attack!`;
     }
 }
 
@@ -578,10 +579,12 @@ function handleGameOver() {
     output.innerHTML = "Game over!\n";
     if (timedOut) {
         output.innerHTML += "Room time limit exceeded!";
+        consoleOutput.style.backgroundColor = "##f8fafc";
         return;
     }
     output.innerHTML += winner + " wins!";
     gameStarted = false;
+    consoleOutput.style.backgroundColor = "#f97316";
 }
 
 function handleShipSunk() {
@@ -625,6 +628,7 @@ function processNewState() {
             if (opponent === null) {
                 opponent = pollData.activePlayer;
             }
+            consoleOutput = document.getElementById("output-text");
             document.getElementById("output-text").innerHTML =
                 "Game started!\n";
             if (pollData.activePlayer === player.name) {
@@ -656,8 +660,13 @@ function processNewState() {
 
     updateOceanGrid(i);
     updateTargetGrid(i);
+
+    consoleOutput.style.color = "white";
     if (pollData.activePlayer !== player.name) {
+        consoleOutput.style.backgroundColor = "#6b7280";
         updateState();
+    } else {
+        consoleOutput.style.backgroundColor = "#3b82f6";
     }
 }
 
@@ -670,11 +679,6 @@ function startNewGame() {
         alert("Please enter a player ID");
         return;
     }
-    // if (window.innerWidth < 760) {
-    //     targetGridContainer = document.getElementById("target-grid-container");
-    //     targetGridContainerParent = targetGridContainer.parentElement;
-    //     targetGridContainer.remove();
-    // }
     player = new Player(playerId);
     const payload = {
         actionType: "NEW",
@@ -1003,7 +1007,25 @@ function rand() {
     return Math.floor(Math.random() * 100) + 1;
 }
 
+function resetGrids() {
+    player.ships.length = 0;
+    const playerGrid = document.getElementById("player-grid");
+    const playerShips = document.getElementById("player-ships");
+
+    playerGrid.replaceChildren();
+    playerShips.replaceChildren();
+
+    createGrid("player-grid");
+
+    createShip("player-ships", 5, "carrier");
+    createShip("player-ships", 4, "battleship");
+    createShip("player-ships", 3, "cruiser");
+    createShip("player-ships", 3, "submarine");
+    createShip("player-ships", 2, "destroyer");
+}
+
 function autoPlacing() {
+    resetGrids();
     while (player.ships.length < 5) {
         document.getElementById("player-ships-carrier-1").click();
         alignment = rand() % 2 === 0 ? "horizontal" : "vertical";
