@@ -2,6 +2,9 @@ package com.cs410.battleship.controller;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,16 +16,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
-
 @RestController
 @RequestMapping("/api")
 public class GameStateController {
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    
     private Queue<Room> rooms = new LinkedList<>();
 
     private ResponseEntity<String> createRoom(String payload){
         String playerID = DataLoader.getPlayerID(payload);
         Room room = new Room(playerID);
         rooms.add(room);
+        scheduler.schedule(() -> {
+            rooms.remove(room);
+        }, 1, TimeUnit.HOURS);
         return ResponseEntity.ok().body(DataLoader.stringfy(room));
     }
 
@@ -102,7 +109,7 @@ public class GameStateController {
                 return room.poll(payload);
             }
             DeferredResult<ResponseEntity<String>> request = new DeferredResult<>();
-            request.setResult(ResponseEntity.status(HttpStatus.NOT_FOUND).body(DataLoader.stringfy("Invalid room ID")));
+            request.setResult(ResponseEntity.ok().body(DataLoader.stringfy("Invalid room ID")));
             return request;
         } else if(actionType.equals("JOIN_RANDOM")) {
             return joinRandom(payload);
