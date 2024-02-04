@@ -1,4 +1,4 @@
-# Milestone 1: Battleship Specificaion
+# Milestone 1: Battleship Specification
 
 ### Team
 - Nathan Brilmayer
